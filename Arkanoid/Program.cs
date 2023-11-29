@@ -21,30 +21,91 @@ namespace Arkanoid
         static Ball ball;
 
         static int attemptsNumber;
-        static bool attemptsDecreased = false;
-        static bool isGame = true;
+        static bool attemptsDecreased;
+        static bool isGame;
 
-        static int blocksNum = 100;
+        static int blocksNum;
+        static int blocksCount;
         static int lvlNumber = 1;
+
+        static int[] blocksHP;
+        static int[] blocks2HP;
 
         public static void SetStartPosition()
         {
             int index = 0;
-            for (int y = 0; y < 10; y++)
+
+            blocksHP = new int[blocksNum];
+            blocks2HP = new int[blocksNum];
+
+            for (int i = 0; i < blocksNum; i++)
             {
-                for (int x = 0; x < 10; x++)
+                if (blocks[i] != null)
                 {
-                    blocks[index] = new Sprite(blockTexture);
-                    blocks[index].Position = new Vector2f(x * (blocks[index].TextureRect.Width + 15) + 75, y * (blocks[index].TextureRect.Height + 15) + 100);
-                    
-                    if(index % 2 == 0)
-                    {
-                        blocks2[index] = new Sprite(block2Texture);
-                        blocks2[index].Position = new Vector2f(x * (blocks2[index].TextureRect.Width + 15) + 75, y * (blocks2[index].TextureRect.Height + 15) + 100);
-                    }
-                    index++;
+                    blocksHP[i] = 1;
+                }
+
+                if (blocks2[i] != null)
+                {
+                    blocks2HP[i] = 2;
                 }
             }
+
+            if (lvlNumber == 1)
+            {
+                for (int y = 0; y < 10; y++)
+                {
+                    for (int x = 0; x < 10; x++)
+                    {
+                       blocks[index] = new Sprite(blockTexture);
+                       blocks[index].Position = new Vector2f(x * (blocks[index].TextureRect.Width + 15) + 75, y * (blocks[index].TextureRect.Height + 15) + 100);
+                       index++;
+                    }
+                }
+            }
+
+            if(lvlNumber == 2)
+            {
+                for (int y = 0; y < 10; y++)
+                {
+                    for (int x = 0; x < 10; x++)
+                    {
+                        if (x > 0 && x < 9 && y > 0 && y < 9)
+                        {
+                            blocks[index] = new Sprite(blockTexture);
+                            blocks[index].Position = new Vector2f(x * (blocks[index].TextureRect.Width + 15) + 75, y * (blocks[index].TextureRect.Height + 15) + 100);
+                        }
+                        else
+                        {
+                            blocks2[index] = new Sprite(block2Texture);
+                            blocks2[index].Position = new Vector2f(x * (blocks2[index].TextureRect.Width + 15) + 75, y * (blocks2[index].TextureRect.Height + 15) + 100);
+                        }
+                        index++;
+                    }
+                }
+            }
+
+            if(lvlNumber == 3)
+            {
+                for (int y = 0; y < 10; y++)
+                {
+                    for (int x = 0; x < 10; x++)
+                    {
+                        if ((x + y) % 2 == 0)
+                        {
+                            blocks[index] = new Sprite(blockTexture);
+                            blocks[index].Position = new Vector2f(x * (blocks[index].TextureRect.Width + 15) + 75, y * (blocks[index].TextureRect.Height + 15) + 100);
+                        }
+                        else
+                        {
+                            blocks2[index] = new Sprite(block2Texture);
+                            blocks2[index].Position = new Vector2f(x * (blocks2[index].TextureRect.Width + 15) + 75, y * (blocks2[index].TextureRect.Height + 15) + 100);
+                        }
+                        index++;
+                    }
+                }
+            }
+
             stick.Position = new Vector2f(385, 500);
             ball.sprite.Position = new Vector2f(380, 475);
         }
@@ -68,16 +129,24 @@ namespace Arkanoid
             blockTexture = new Texture("Block.png");
             block2Texture = new Texture("Block2.png");
 
+            blocksNum = 100;
+            attemptsDecreased = false;
+            isGame = true;
+            attemptsNumber = 3;
+            blocksCount = blocksNum;
+
             ball = new Ball(ballTexture);
             stick = new Sprite(stickTexture);
             blocks = new Sprite[blocksNum];
             blocks2 = new Sprite[blocksNum];
-            for (int i = 0; i < blocks.Length; i++) blocks[i] = new Sprite(blockTexture);
-            for (int i = 0; i < blocks2.Length; i++) blocks2[i] = new Sprite(block2Texture);
+
+            for (int i = 0; i < blocksNum; i++)
+            {
+                blocks[i] = new Sprite(blockTexture);
+                blocks2[i] = new Sprite(block2Texture);
+            }
 
             SetStartPosition();
-
-            attemptsNumber = 3;
 
             while (window.IsOpen == true && isGame == true)
             {
@@ -91,18 +160,32 @@ namespace Arkanoid
 
                 ball.CheckCollision(stick, "Stick");
 
-                for (int i = 0; i < blocks.Length; i++)
+                for (int i = 0; i < blocksNum; i++)
                 {
-                    if (ball.CheckCollision(blocks[i], "Block") == true)
+                    if (blocks[i] != null)
                     {
-                        blocks[i].Position = new Vector2f(1000, 1000);
-                        break;
+                        if (ball.CheckCollision(blocks[i], "Block") == true)
+                        {
+                            blocksHP[i]--;
+                            if (blocksHP[i] == 0)
+                            {
+                                blocks[i] = null;
+                            }
+                            break;
+                        }
                     }
 
-                    if (ball.CheckCollision(blocks2[i], "Block2") == true)
+                    if (blocks2[i] != null)
                     {
-                        blocks2[i].Position = new Vector2f(1000, 1000);
-                        break;
+                        if (ball.CheckCollision(blocks2[i], "Block2") == true)
+                        {
+                            blocks2HP[i]--;
+                            if (blocks2HP[i] == 0)
+                            {
+                                blocks2[i] = null;
+                            }
+                            break;
+                        }
                     }
                 }
 
@@ -110,21 +193,17 @@ namespace Arkanoid
 
                 window.Draw(ball.sprite);
                 window.Draw(stick);
-                if (lvlNumber == 1)
+
+                for (int i = 0; i < blocksNum; i++)
                 {
-                    for (int i = 0; i < blocks.Length; i++)
+                    if (blocks[i] != null)
                     {
-                        if (i % 2 != 0)
-                        {
-                            window.Draw(blocks[i]);
-                        }
+                        window.Draw(blocks[i]);
                     }
-                    for (int i = 0; i < blocks2.Length; i++)
+
+                    if (blocks2[i] != null)
                     {
-                        if (i % 2 == 0)
-                        {
-                            window.Draw(blocks2[i]);
-                        }
+                        window.Draw(blocks2[i]);
                     }
                 }
 
@@ -145,6 +224,13 @@ namespace Arkanoid
                 if (attemptsNumber == 0)
                 {
                     isGame = false;
+                }
+
+                if (blocksCount <= 0)
+                {
+                    lvlNumber++;
+                    ball.speed += 5;
+                    SetStartPosition();
                 }
 
                 if (!isGame)
